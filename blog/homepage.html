@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>homepage</title>
+        <style>
+           body{
+            font-size: x-large;
+           }
+        </style>
+    </head>
+    <body>
+        <center>
+        <div >
+            <form>
+                <table>
+                    {% for blog in model.Blog %}
+                    <tr>
+                        <td>title:</td>
+                        <td>{{blog.title}}</td>
+                    </tr>
+                    <tr>
+                        <td>body:</td>
+                        <td>{{blog.body}}</td>
+                    </tr>
+                </table>
+            </form>
+        </div>
+    </center>
+    </body>
+</html>

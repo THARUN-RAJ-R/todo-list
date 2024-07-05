@@ -1,11 +1,14 @@
-from fastapi import FastAPI, Depends, Response, HTTPException
+from fastapi import FastAPI, Depends, Request, HTTPException
 from typing import List
 from . import schemas, models
 from .database import engine, SessionLocal
 from sqlalchemy.orm import Session
 from passlib.context import CryptContext
+from fastapi.templating import Jinja2Templates
 
 app = FastAPI()
+
+templates = Jinja2Templates(directory="blog")
 
 models.Base.metadata.create_all(engine)
 
@@ -17,8 +20,17 @@ def get_db():
     finally:
         db.close()
 
+def get_db1(id):
+    int_check(id)
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
-def get_db2(id: int):
+
+def get_db2(id):
+    int_check(id)
     db = SessionLocal()
     blog = db.query(models.Blog).filter(models.Blog.id == id).first()
     if not blog:
@@ -36,19 +48,25 @@ def create(request: schemas.Blog, db: Session = Depends(get_db)):
 
 
 @app.delete("/blog/{id}", status_code=204)
-def destroy(id, db: Session = Depends(get_db)):
+def destroy(id, db: Session = Depends(get_db1)):
     db.query(models.Blog).filter(models.Blog.id == id).delete(synchronize_session=False)
     db.commit()
     return "DELETED"
 
+def int_check(id):
+    try:
+        id = int(id) 
+        return id
+    except ValueError:
+        raise HTTPException(status_code=400, detail="ID must be an integer")
+    
 
-# doubt  update
 @app.put("/blog/{id}", status_code=202)
-def update(id: int | str, request: schemas.Blog, db: Session = Depends(get_db2)):
+def update(id,request: schemas.Blog, db: Session = Depends(get_db2)):
     blog = db.query(models.Blog).filter(models.Blog.id == id).first()
-    blog.id = "a"
     blog.title = request.title
     blog.body = request.body
+    
     db.commit()
     return "updated"
 
@@ -60,23 +78,14 @@ def all(db: Session = Depends(get_db)):
 
 
 @app.get("/blog/{id}", status_code=200, response_model=schemas.ShowBlog)
-def show(id, db: Session = Depends(get_db)):
+def show(id,request:Request, db: Session = Depends(get_db1)):
     blog = db.query(models.Blog).filter(models.Blog.id == id).first()
+    title=blog.title
+    body=blog.body
     if not blog:
         raise HTTPException(
             status_code=404,
             detail=f"Blog with id {id} not found",
             headers={"xerror": "not found"},
         )
-    return blog
-
-
-@app.post("/user")
-def Create_user(request: schemas.User, db: Session = Depends(get_db)):
-    new_user = models.User(
-        name=request.name, email=request.email, password=request.password
-    )
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
-    return new_user
+    return templates.TemplateResponse("homepage.html", {"request": request, "title":title,"body":body})
