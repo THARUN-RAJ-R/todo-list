@@ -6,8 +6,11 @@ from sqlalchemy.orm import Session
 from passlib.context import CryptContext
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 
 app = FastAPI()
+
+app.mount("/static", StaticFiles(directory="blog/static"), name="static")
 
 templates = Jinja2Templates(directory="blog")
 
