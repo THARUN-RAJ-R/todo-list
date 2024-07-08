@@ -21,13 +21,7 @@ def get_db():
     finally:
         db.close()
 
-def get_db1(id):
-    int_check(id)
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+
 
 
 def get_db2(id):
@@ -53,7 +47,7 @@ def create(request: Request, title: str = Form(...), body: str = Form(...), db: 
 
 
 @app.delete("/blog/{id}", status_code=204)
-def destroy(id, db: Session = Depends(get_db1)):
+def destroy(id, db: Session = Depends(get_db2)):
     db.query(models.Blog).filter(models.Blog.id == id).delete(synchronize_session=False)
     db.commit()
     return "DELETED"
@@ -65,7 +59,7 @@ def int_check(id):
     try:
         id = int(id) 
         return id
-    except ValueError:
+    except Exception as e:
         raise HTTPException(status_code=400, detail="ID must be an integer")
     
 
@@ -121,7 +115,7 @@ def all(request:Request,db: Session = Depends(get_db)):
 
 
 @app.get("/blog/{id}", status_code=200, response_model=schemas.Blog)
-def show(id,request:Request, db: Session = Depends(get_db1)):
+def show(id,request:Request, db: Session = Depends(get_db2)):
     blog = db.query(models.Blog).filter(models.Blog.id == id).first()
     title=blog.title
     body=blog.body
