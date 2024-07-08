@@ -5,6 +5,7 @@ from .database import engine, SessionLocal
 from sqlalchemy.orm import Session
 from passlib.context import CryptContext
 from fastapi.templating import Jinja2Templates
+from fastapi.responses import HTMLResponse
 
 app = FastAPI()
 
@@ -38,13 +39,17 @@ def get_db2(id):
     return db
 
 
-@app.post("/blog", status_code=201, response_model=schemas.Blog)
-def create(request: Request, form_data: schemas.Blog, db: Session = Depends(get_db)):
-    new_blog = models.Blog(title=form_data.title, body=form_data.body)
+@app.post("/blog", status_code=201)
+def create(request: Request, title: str = Form(...), body: str = Form(...), db: Session = Depends(get_db)):
+    new_blog = models.Blog(title=title, body=body)
     db.add(new_blog)
     db.commit()
     db.refresh(new_blog)
-    return templates.TemplateResponse("homepage.html", {"request": request})
+    
+    return all(request,db)
+
+
+
 
 
 @app.delete("/blog/{id}", status_code=204)
@@ -52,6 +57,9 @@ def destroy(id, db: Session = Depends(get_db1)):
     db.query(models.Blog).filter(models.Blog.id == id).delete(synchronize_session=False)
     db.commit()
     return "DELETED"
+
+
+
 
 def int_check(id):
     try:
@@ -61,14 +69,38 @@ def int_check(id):
         raise HTTPException(status_code=400, detail="ID must be an integer")
     
 
-@app.put("/blog/{id}", status_code=202)
-def update(id,request: schemas.Blog, db: Session = Depends(get_db2)):
-    blog = db.query(models.Blog).filter(models.Blog.id == id).first()
-    blog.title = request.title
-    blog.body = request.body
+
+
+
+
+
+
+
+
+
     
+
+@app.put("/blog/{id}", status_code=202)
+def update(id,request:Request, title: str = Form(...), body: str = Form(...),db: Session = Depends(get_db2)):
+    blog = db.query(models.Blog).filter(models.Blog.id == id).first()
+    blog.title = title
+    blog.body = body
     db.commit()
-    return "updated"
+    return show(id,request,db)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 @app.get("/blog")
@@ -76,7 +108,19 @@ def all(request:Request,db: Session = Depends(get_db)):
     blogs = db.query(models.Blog).all()
     return templates.TemplateResponse("homepage.html", {"request": request , "blogs" : blogs})
 
-@app.get("/blog/{id}", status_code=200, response_model=schemas.ShowBlog)
+
+
+
+
+
+
+
+
+
+
+
+
+@app.get("/blog/{id}", status_code=200, response_model=schemas.Blog)
 def show(id,request:Request, db: Session = Depends(get_db1)):
     blog = db.query(models.Blog).filter(models.Blog.id == id).first()
     title=blog.title
@@ -87,4 +131,4 @@ def show(id,request:Request, db: Session = Depends(get_db1)):
             detail=f"Blog with id {id} not found",
             headers={"xerror": "not found"},
         )
-    return templates.TemplateResponse("homepage.html", {"request": request, "title":title,"body":body})
+    return templates.TemplateResponse("homepage.html", {"request": request, "title":title,"body":body,"id":id})
