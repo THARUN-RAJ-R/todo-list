@@ -22,16 +22,23 @@
                 <label for="title">title</label>
                 <input type="text" name="title" id="title" required><br><br>
                 <label for="body">body</label>
-                <input type="text" name="title" id="title" required><br><br>
+                <input type="text" name="body" id="body" required><br><br>
                 <input type="submit" name="submit" value="submit">
             </form>
         </div>
         <div >
-                <table>
+        
+        <div >
+                <table method="get">
                     <tr>
                         <th>id</th>
                         <th>title</th>
                         <th>body</th>
+                    </tr>
+                    <tr>
+                        <td>{{id}}</td>
+                        <td>{{title}}</td>
+                        <td>{{body}}</td>
                     </tr>
                     {% for blog in blogs %}
                     <tr>
@@ -42,6 +49,7 @@
                     {% endfor %}
                 </table>
         </div>
+
     </center>
     </body>
 </html>
