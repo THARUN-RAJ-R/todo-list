@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, Request, HTTPException
+from fastapi import FastAPI, Depends, Request, HTTPException,Form
 from typing import List
 from . import schemas, models
 from .database import engine, SessionLocal
@@ -38,13 +38,13 @@ def get_db2(id):
     return db
 
 
-@app.post("/blog", status_code=201)
-def create(request: schemas.Blog, db: Session = Depends(get_db)):
-    new_blog = models.Blog(title=request.title, body=request.body)
+@app.post("/blog", status_code=201, response_model=schemas.Blog)
+def create(request: Request, form_data: schemas.Blog, db: Session = Depends(get_db)):
+    new_blog = models.Blog(title=form_data.title, body=form_data.body)
     db.add(new_blog)
     db.commit()
     db.refresh(new_blog)
-    return new_blog
+    return templates.TemplateResponse("homepage.html", {"request": request})
 
 
 @app.delete("/blog/{id}", status_code=204)
@@ -72,10 +72,9 @@ def update(id,request: schemas.Blog, db: Session = Depends(get_db2)):
 
 
 @app.get("/blog")
-def all(db: Session = Depends(get_db)):
+def all(request:Request,db: Session = Depends(get_db)):
     blogs = db.query(models.Blog).all()
-    return blogs
-
+    return templates.TemplateResponse("homepage.html", {"request": request , "blogs" : blogs})
 
 @app.get("/blog/{id}", status_code=200, response_model=schemas.ShowBlog)
 def show(id,request:Request, db: Session = Depends(get_db1)):

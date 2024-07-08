@@ -6,24 +6,41 @@
            body{
             font-size: x-large;
            }
+           table{
+            border: 1px solid black;
+           }
+           tr,td
+           {
+            border: 1px solid black;
+           }
         </style>
     </head>
     <body>
         <center>
+        <div>
+            <form method="post">
+                <label for="title">title</label>
+                <input type="text" name="title" id="title" required><br><br>
+                <label for="body">body</label>
+                <input type="text" name="title" id="title" required><br><br>
+                <input type="submit" name="submit" value="submit">
+            </form>
+        </div>
         <div >
-            <form>
                 <table>
-                    {% for blog in model.Blog %}
                     <tr>
-                        <td>title:</td>
-                        <td>{{blog.title}}</td>
+                        <th>id</th>
+                        <th>title</th>
+                        <th>body</th>
                     </tr>
+                    {% for blog in blogs %}
                     <tr>
-                        <td>body:</td>
+                        <td>{{blog.id}}</td>
+                        <td>{{blog.title}}</td>
                         <td>{{blog.body}}</td>
                     </tr>
+                    {% endfor %}
                 </table>
-            </form>
         </div>
     </center>
     </body>
