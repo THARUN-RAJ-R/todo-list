@@ -26,12 +26,6 @@ Base.metadata.create_all(bind=engine)
 
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-class Test_Blog(Base):
-    __tablename__ = "test_blogs"
-
-    id = Column(Integer, primary_key=True, index=True)
-    title = Column(String)
-    body = Column(String)
 
 @pytest.fixture(scope="module")
 def db_session():
