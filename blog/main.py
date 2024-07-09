@@ -1,11 +1,11 @@
-from fastapi import FastAPI, Depends, Request, HTTPException,Form
+from fastapi import FastAPI, Depends, Request, HTTPException,Form,status
 from typing import List
 from . import schemas, models
 from .database import engine, SessionLocal
 from sqlalchemy.orm import Session
 from passlib.context import CryptContext
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse,RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 app = FastAPI()
@@ -42,16 +42,16 @@ def create(request: Request, title: str = Form(...), body: str = Form(...), db: 
     db.add(new_blog)
     db.commit()
     db.refresh(new_blog)
-    
-    return all(request,db)
-
+    url=app.url_path_for("all")
+    return RedirectResponse(url=url,status_code=status.HTTP_303_SEE_OTHER)
 
 
 
 
 @app.delete("/blog/{id}", status_code=204)
 def destroy(id, db: Session = Depends(get_db2)):
-    db.query(models.Blog).filter(models.Blog.id == id).delete(synchronize_session=False)
+    blog = db.query(models.Blog).filter(models.Blog.id == id).first()
+    db.delete(blog)
     db.commit()
     return "DELETED"
 
@@ -68,35 +68,15 @@ def int_check(id):
 
 
 
-
-
-
-
-
-
-
     
-
 @app.put("/blog/{id}", status_code=202)
-def update(id,request:Request, title: str = Form(...), body: str = Form(...),db: Session = Depends(get_db2)):
+def update(id, request: Request, title: str = Form(...), body: str = Form(...), db: Session = Depends(get_db2)):
     blog = db.query(models.Blog).filter(models.Blog.id == id).first()
     blog.title = title
     blog.body = body
     db.commit()
-    return show(id,request,db)
-
-
-
-
-
-
-
-
-
-
-
-
-
+    db.refresh(blog)
+    return RedirectResponse(url=app.url_path_for("all"), status_code=status.HTTP_303_SEE_OTHER)
 
 
 
@@ -108,24 +88,15 @@ def all(request:Request,db: Session = Depends(get_db)):
 
 
 
-
-
-
-
-
-
-
-
-
 @app.get("/blog/{id}", status_code=200, response_model=schemas.Blog)
-def show(id,request:Request, db: Session = Depends(get_db2)):
+def show(id, request: Request, db: Session = Depends(get_db2)):
     blog = db.query(models.Blog).filter(models.Blog.id == id).first()
-    title=blog.title
-    body=blog.body
+    title = blog.title
+    body = blog.body
     if not blog:
         raise HTTPException(
             status_code=404,
             detail=f"Blog with id {id} not found",
             headers={"xerror": "not found"},
         )
-    return templates.TemplateResponse("homepage.html", {"request": request, "title":title,"body":body,"id":id})
+    return templates.TemplateResponse("homepage.html", {"request": request, "title": title, "body": body, "id": id})

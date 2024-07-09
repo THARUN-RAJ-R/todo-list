@@ -9,7 +9,7 @@
     <body>
         <center>
         <div>
-            <form method="post">
+            <form id="createForm" method="post" action="javascript:submitForm('createForm', 'POST', '/blog')">
                 <label for="title">title</label>
                 <input type="text" name="title" id="title" required><br><br>
                 <label for="body">body</label>
@@ -25,22 +25,67 @@
                         <th>id</th>
                         <th>title</th>
                         <th>body</th>
+                        <th>action</th>
                     </tr>
-                    <tr>
+                    <tr>    
                         <td>{{id}}</td>
                         <td>{{title}}</td>
                         <td>{{body}}</td>
+                        <td>
+                            <form id="updateForm{{ id }}" method="post" action="javascript:submitForm('updateForm{{ id }}', 'PUT', '/blog/{{ id }}')">
+                                <input type="text" name="title" value="{{ title }}" required>
+                                <input type="text" name="body" value="{{ body }}" required>
+                                <input type="submit" value="Update">
+                            </form>
+                            <button onclick="deleteBlog({{id}})">Delete</button>
+                        </td>
                     </tr>
                     {% for blog in blogs %}
                     <tr>
                         <td>{{blog.id}}</td>
                         <td>{{blog.title}}</td>
                         <td>{{blog.body}}</td>
+                        <td>
+                            <form id="updateForm{{ blog.id }}" method="post" action="javascript:submitForm('updateForm{{ blog.id }}', 'PUT', '/blog/{{ blog.id }}')">
+                                <input type="text" name="title" value="{{ blog.title }}" required>
+                                <input type="text" name="body" value="{{ blog.body }}" required>
+                                <input type="submit" value="Update">
+                            </form>
+                            <button onclick="deleteBlog({{blog.id}})">Delete</button>
+                        </td>
                     </tr>
                     {% endfor %}
                 </table>
         </div>
-
     </center>
+
+    <script>
+        function deleteBlog(id) {
+            var xhr = new XMLHttpRequest();
+            xhr.open("DELETE", `/blog/${id}`, true);
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4 && xhr.status === 204) {
+                    window.location.href = "/blog";
+                }
+            };
+            xhr.send(null);
+        }
+        function submitForm(formId, method, url) {
+            var form = document.getElementById(formId);
+            var formData = new FormData(form);
+            var xhr = new XMLHttpRequest();
+            xhr.open(method, url, true);
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 303) {
+                        window.location.href = xhr.getResponseHeader('Location');
+                    } else if (xhr.status === 200 || xhr.status === 201) {
+                        window.location.reload(); 
+                    }
+                }
+            };
+            xhr.send(formData);
+        }
+    </script>   
     </body>
 </html>
