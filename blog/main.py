@@ -32,6 +32,11 @@ def get_db2(id):
         raise HTTPException(status_code=404, detail=f"Blog with id {id} not found")
     return db
 
+@app.get("/",status_code=200)
+def all(request:Request,db: Session = Depends(get_db)):
+    blogs = db.query(models.Blog).all()
+    return templates.TemplateResponse("homepage.html", {"request": request , "blogs" : blogs})
+
 @app.get("/blog",status_code=200)
 def all(request:Request,db: Session = Depends(get_db)):
     blogs = db.query(models.Blog).all()

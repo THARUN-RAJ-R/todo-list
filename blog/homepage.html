@@ -3,29 +3,26 @@
     <head>
         <title>homepage</title>
         <link rel="stylesheet" href="{{ url_for('static', path='css/main.css') }}">
-
-
     </head>
     <body>
         <center>
         <div>
             <form id="createForm" method="post" action="javascript:submitForm('createForm', 'POST', '/blog')">
-                <label for="title">title</label>
+                <label for="title">Title</label>
                 <input type="text" name="title" id="title" required><br><br>
-                <label for="body">body</label>
+                <label for="body">Body</label>
                 <input type="text" name="body" id="body" required><br><br>
-                <input type="submit" name="submit" value="submit">
+                <input class="update" type="submit" name="submit" value="submit">
             </form>
         </div>
         <div >
-        
         <div >
                 <table method="get">
                     <tr>
-                        <th>id</th>
-                        <th>title</th>
-                        <th>body</th>
-                        <th>action</th>
+                        <th>ID</th>
+                        <th>Title</th>
+                        <th>Body</th>
+                        <th>Action</th>
                     </tr>
                     {% for blog in blogs %}
                     <tr>
@@ -36,7 +33,7 @@
                             <form id="updateForm{{ blog.id }}" method="post" action="javascript:submitForm('updateForm{{ blog.id }}', 'PUT', '/blog/{{ blog.id }}')">
                                 <input type="text" name="title" value="{{ blog.title }}" required>
                                 <input type="text" name="body" value="{{ blog.body }}" required>
-                                <input type="submit" value="Update">
+                                <input class="update" type="submit" value="Update">
                             </form>
                             <button onclick="deleteBlog({{blog.id}})">Delete</button>
                         </td>
@@ -45,7 +42,6 @@
                 </table>
         </div>
     </center>
-
     <script>
         function deleteBlog(id) {
             var xhr = new XMLHttpRequest();
@@ -66,7 +62,7 @@
                 if (xhr.readyState === 4) {
                     if (xhr.status === 303) {
                         window.location.href = xhr.getResponseHeader('Location');
-                    } else if (xhr.status === 200 || xhr.status === 201) {
+                    } else if (xhr.status === 202 || xhr.status === 201) {
                         window.location.reload(); 
                     }
                 }
