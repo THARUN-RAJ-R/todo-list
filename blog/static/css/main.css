@@ -1,13 +1,13 @@
 body{
     font-size: x-large;
-    background-color: black;
-    color: aqua;
+    background-color: rgb(33, 10, 48);
+    color: rgb(108, 187, 189);
 }
 input{
     background-color:aliceblue;
 }
 .update
-{
+{   
     background-color: green;
 }
 button
