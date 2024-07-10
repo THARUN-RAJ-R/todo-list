@@ -1,18 +1,19 @@
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, StaticPool
-from sqlalchemy import Column, Integer, String
+from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import Session
 from .main import app,get_db
-from .database import Base
 from fastapi import Form
-from . import models
+from . import model
 import pytest
 
 
 client = TestClient(app)
 
 DATABASE_URL ="sqlite:///./test.db"
+
+
 
 engine = create_engine(
     DATABASE_URL,
@@ -22,7 +23,10 @@ engine = create_engine(
     poolclass=StaticPool,
 )
 
-Base.metadata.create_all(bind=engine)
+
+
+Base = declarative_base()
+
 
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
@@ -34,7 +38,7 @@ def db_session():
     session = TestingSessionLocal(bind=connection)
 
     yield session
-
+    
     session.close()
     transaction.rollback()
     connection.close()
@@ -61,8 +65,8 @@ def teardown() -> None:
 
 def test_get_all_blogs(client: TestClient, db_session: Session):
 
-    blog1 = models.Blog(title="Test Blog 1", body="Test Body 1")
-    blog2 = models.Blog(title="Test Blog 2", body="Test Body 2")
+    blog1 = model.Blog(title="Test Blog 1", body="Test Body 1")
+    blog2 = model.Blog(title="Test Blog 2", body="Test Body 2")
     db_session.add(blog1)
     db_session.add(blog2)
     db_session.commit()
@@ -76,11 +80,31 @@ def test_get_all_blogs(client: TestClient, db_session: Session):
 def test_create_blog(client: TestClient, db_session: Session):
     response = client.post("/blog", data={"title": "New Blog", "body": "New Body"})
     assert response.status_code == 201
-    new_blog = db_session.query(models.Blog).filter_by(title="New Blog").first()
+    new_blog = db_session.query(model.Blog).filter_by(title="New Blog").first()
     assert new_blog is not None
     assert new_blog.title == "New Blog"
     assert new_blog.body == "New Body"
     
+def test_update_blog(client: TestClient, db_session: Session):
+    blog = model.Blog(title="Old Title", body="Old Body")
+    db_session.add(blog)
+    db_session.commit()
+    db_session.refresh(blog)
+    
+    response = client.put(f"/blog/{blog.id}", data={"title": "Updated Title", "body": "Updated Body"})
+    assert response.status_code == 202  
+    updated_blog = db_session.query(model.Blog).filter_by(id=blog.id).first()
+    assert updated_blog.title == "Updated Title"
+    assert updated_blog.body == "Updated Body"
 
-
-
+def test_delete_blog(client: TestClient, db_session: Session):
+    blog = model.Blog(title="Title to Delete", body="Body to Delete")
+    db_session.add(blog)
+    db_session.commit()
+    db_session.refresh(blog)
+    
+    response = client.delete(f"/blog/{blog.id}")
+    assert response.status_code == 204
+    
+    deleted_blog = db_session.query(model.Blog).filter_by(id=blog.id).first()
+    assert deleted_blog is None

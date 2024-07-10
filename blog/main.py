@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, Request, HTTPException,Form,status
+from fastapi import FastAPI, Depends, Request, HTTPException,Form,status,Response
 from . import schemas, models
 from .database import engine, SessionLocal
 from sqlalchemy.orm import Session
@@ -38,7 +38,7 @@ def all(request:Request,db: Session = Depends(get_db)):
     return templates.TemplateResponse("homepage.html", {"request": request , "blogs" : blogs})
     
 @app.post("/blog", status_code=201)
-def create(request: Request, title: str = Form(...), body: str = Form(...), db: Session = Depends(get_db)):
+def create(request : Request, title: str = Form(...), body: str = Form(...), db: Session = Depends(get_db)):
     new_blog = models.Blog(title=title, body=body)
     db.add(new_blog)
     db.commit()
@@ -46,13 +46,14 @@ def create(request: Request, title: str = Form(...), body: str = Form(...), db: 
     url=app.url_path_for("all")
     return RedirectResponse(url=url,status_code=status.HTTP_201_CREATED)
 
-
 @app.delete("/blog/{id}", status_code=204)
-def destroy(id, db: Session = Depends(get_db2)):
+def delete_blog(id: int, db: Session = Depends(get_db)):
     blog = db.query(models.Blog).filter(models.Blog.id == id).first()
+    if not blog:
+        raise HTTPException(status_code=404, detail="Blog not found")
     db.delete(blog)
     db.commit()
-    return "DELETED"
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 def int_check(id):
     try:
@@ -63,13 +64,16 @@ def int_check(id):
     
 
 @app.put("/blog/{id}", status_code=202)
-def update(id, request: Request, title: str = Form(...), body: str = Form(...), db: Session = Depends(get_db2)):
+def update_blog(request: Request,id: int, title: str = Form(...), body: str = Form(...), db: Session = Depends(get_db)):
     blog = db.query(models.Blog).filter(models.Blog.id == id).first()
+    if not blog:
+        raise HTTPException(status_code=404, detail="Blog not found")
     blog.title = title
     blog.body = body
     db.commit()
     db.refresh(blog)
-    return all(id,db)
+    url = app.url_path_for("all")
+    return RedirectResponse(url=url, status_code=status.HTTP_202_ACCEPTED)
 
 
 

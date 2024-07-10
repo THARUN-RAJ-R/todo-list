@@ -12,13 +12,6 @@ class Blog(BaseModel):
         return cls(title=title, body=body)
 
 
-class ShowBlog(Blog):
-    title: str
-    body: str
-
-    class Config:
-        from_attributes = True
-    
 
 
 
